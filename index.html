@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+</head>
+
+<body>
+    <div class="container">
+        <p class="heading-txt">Quiz APP </p>
+        <p id="timer"></p>
+        <div class="question">
+            <span id="question-number"></span>
+            <span id="question-txt"></span>
+        </div>
+        <div class="option-container">
+            <input type="radio" name="opt" id="opt1" onclick="updateSelection('option1')">
+            <label for="opt1" id="option1"></label>
+            <input type="radio" name="opt" id="opt2" onclick="updateSelection('option2')">
+            <label for="opt2" id="option2"></label>
+            <input type="radio" name="opt" id="opt3" onclick="updateSelection('option3')">
+            <label for="opt3" id="option3"></label>
+            <input type="radio" name="opt" id="opt4" onclick="updateSelection('option4')">
+            <label for="opt4" id="option4"></label>
+
+            <input type="radio" name="opt" id="opt5" style="display: none;">
+        </div>
+        <div class="row">
+            <input class="col-6 btn btn-primary" type="button" value="Back" id="back-button" onclick="onPrevious()">
+            <input class="col-6 btn btn-success" type="button" value="Next" id="next-button" onclick="onNext()" disabled>
+        </div>
+    </div>
+    <script src="./main.js"></script>
+</body>
+
+</html>
