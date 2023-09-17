@@ -1,4 +1,4 @@
-const MAX_TIME = 15;
+const MAX_TIME = 10;
 const correct = ["JavaScript", "Cascading Style Sheets", "Hypertext Markup Language", "1995"];
 const quizQuestions = [
     {
@@ -77,65 +77,65 @@ const loadTime = (consumed) => {
 };
 
 const startInterval = (index) => {
+    index = index < 0 ? 0 : index;
     clearInterval(quizQuestions[index].timer);
-    if (quizQuestions[index].consumed === 0) {
-        loadTime(0);
-    }
-    else {
-        if (selected[index] === undefined || selected[index] === null) {
-            if (bg_timer > -1) {
-                quizQuestions[index].consumed = bg_timer;
-                bg_timer = null;
-                clearInterval(bg_interval);
-                bg_interval = null;
-            }
-            quizQuestions[index].timer = setInterval(() => {
-                if (quizQuestions[index].consumed <= 0) {
-                    clearInterval(quizQuestions[index].timer);
-                    quizQuestions[index].timer = null;
-                    quizQuestions[index].consumed = 1;
-                    selected[current_index] = "opt5";
-                    if (current_index === 3) return results();
-                    current_index++;
-                    bootstrapApp(current_index);
-                }
-                loadTime(quizQuestions[index].consumed);
-                quizQuestions[index].consumed--;
-            }, 1000);
+    if (selected[index] === undefined || selected[index] === null) {
+        if (bg_timer > 0 && quizQuestions[index].consumed != 0) {
+            quizQuestions[index].consumed = bg_timer;
+            bg_timer = null;
+            clearInterval(bg_interval);
+            bg_interval = null;
         }
-        else {
-            if (bg_timer > -1) {
-                bg_interval = setInterval(() => {
-                    if (bg_timer === 0) {
-                        clearInterval(bg_interval);
-                        clearInterval(quizQuestions[index].timer);
-                        bg_timer = null;
-                        quizQuestions[index].timer = null
-                        bg_interval = null;
-                        selected[current_index] = "opt5";
-                        if (current_index === 3) return results();
-
-                        current_index++;
-                        quizQuestions[index].consumed = 0;
-                    }
-                    bg_timer--;
-                }, 1000);
+        quizQuestions[index].timer = setInterval(() => {
+            if (quizQuestions[index].consumed <= 0) {
+                clearInterval(quizQuestions[index].timer);
+                quizQuestions[index].timer = null;
+                quizQuestions[index].consumed = 1;
+                selected[current_index] = "opt5";
+                if (current_index === 3) return results();
+                console.log("b");
+                current_index++;
+                bootstrapApp(current_index);
             }
             loadTime(quizQuestions[index].consumed);
-        }
+            quizQuestions[index].consumed--;
+        }, 1000);
     }
+    else {
+        if (bg_timer > 0) {
+            bg_interval = setInterval(() => {
+                if (bg_timer === 0) {
+                    clearInterval(bg_interval);
+                    clearInterval(quizQuestions[index + 1].timer);
+                    bg_timer = null;
+                    quizQuestions[index + 1].timer = null
+                    bg_interval = null;
+                    selected[index + 1] = "opt5";
+                    quizQuestions[index + 1].consumed = 0;
+                    if (current_index === 3) return results();
+                    current_index++;
+                }
+                else bg_timer--;
+            }, 1000);
+        }
+        loadTime(quizQuestions[index].consumed);
+    }
+    // }
 };
 
 const onNext = () => {
+    console.log("current: ", current_index);
     let next_btn = document.getElementById("next-button");
     if (next_btn.disabled) return;
-    quizQuestions[current_index].consumed++;
     if (current_index === 3) return results();
-
     current_index++;
     next_btn.disabled = true;
     let options = document.querySelectorAll('input[name=opt]');
     if (selected[current_index] || quizQuestions[current_index].consumed === 0) {
+        if (selected[current_index] === "opt5" && quizQuestions[current_index].consumed === 0)
+            options.forEach(opt => {
+                opt.checked = false;
+            });
         options.forEach(opt => {
             opt.disabled = true;
         });
@@ -150,18 +150,26 @@ const onNext = () => {
 };
 const onPrevious = () => {
     let next_btn = document.getElementById("next-button");
-
     if (current_index === 0) return;
-    bg_timer = quizQuestions[current_index].consumed;
+
+    if(quizQuestions[current_index].consumed !== 0 && selected[current_index]) {
+        bg_timer = quizQuestions[current_index].consumed;
+    }
     clearInterval(quizQuestions[current_index].timer);
     quizQuestions[current_index].timer = null;
     current_index--;
     bootstrapApp(current_index);
 
     next_btn.disabled = false;
-    if (selected[current_index]) {
-        let answers = document.querySelectorAll('input[name=opt]');
-        let opts = document.querySelectorAll('label');
+    let answers = document.querySelectorAll('input[name=opt]');
+    let opts = document.querySelectorAll('label');
+    if (quizQuestions[current_index].consumed === 0) {
+        answers.forEach(opt => {
+            opt.disabled = true;
+        });
+        next_btn.disabled = false;
+    }
+    else if (selected[current_index]) {
         opts.forEach((op, i) => {
             if (op.innerText === selected[current_index]) {
                 answers[i].checked = true;
@@ -169,8 +177,7 @@ const onPrevious = () => {
         })
     }
     if (selected[current_index] || quizQuestions[current_index].consumed === 0) {
-        let options = document.querySelectorAll('input[name=opt]');
-        options.forEach(opt => {
+        answers.forEach(opt => {
             opt.disabled = true;
         });
     }
@@ -182,7 +189,8 @@ const bootstrapApp = (index) => {
 };
 
 const results = () => {
-    alert(`You scored ${score}`)
+    alert(`You scored ${score}`);
+    window.location.reload();
 };
 
 bootstrapApp(current_index);
