@@ -1,5 +1,6 @@
 const MAX_TIME = 10;
 const correct = ["JavaScript", "Cascading Style Sheets", "Hypertext Markup Language", "1995"];
+const all_times = [];
 const quizQuestions = [
     {
         question: 'Which language runs in a web browser?',
@@ -40,8 +41,10 @@ const quizQuestions = [
 ];
 const selected = [];
 let current_index = 0;
+let last_visited = 0;
 let bg_timer;
 let bg_interval;
+let bg_index;
 let score = 0;
 let TIMER_NODE = document.getElementById('timer');
 
@@ -51,8 +54,7 @@ const loadQuestion = (index) => {
     document.getElementById('option3').innerText = quizQuestions[index].opt3;
     document.getElementById('option4').innerText = quizQuestions[index].opt4;
     document.getElementById('question-number').innerText = index + 1;
-    document.getElementById('question-txt').innerText =
-        quizQuestions[index].question;
+    document.getElementById('question-txt').innerText = quizQuestions[index].question;
 };
 
 const updateSelection = (option) => {
@@ -78,23 +80,26 @@ const loadTime = (consumed) => {
 
 const startInterval = (index) => {
     index = index < 0 ? 0 : index;
-    clearInterval(quizQuestions[index].timer);
     if (selected[index] === undefined || selected[index] === null) {
         if (bg_timer > 0 && quizQuestions[index].consumed != 0) {
             quizQuestions[index].consumed = bg_timer;
-            bg_timer = null;
             clearInterval(bg_interval);
+            bg_timer = null;
+            bg_index = null;
             bg_interval = null;
         }
         quizQuestions[index].timer = setInterval(() => {
             if (quizQuestions[index].consumed <= 0) {
                 clearInterval(quizQuestions[index].timer);
+                clearInterval(bg_interval);
+                bg_timer = null;
+                bg_index = null;
                 quizQuestions[index].timer = null;
                 quizQuestions[index].consumed = 1;
                 selected[current_index] = "opt5";
-                if (current_index === 3) return results();
-                console.log("b");
+                if (current_index === 3 || last_visited === 3) return results();
                 current_index++;
+                last_visited = current_index;
                 bootstrapApp(current_index);
             }
             loadTime(quizQuestions[index].consumed);
@@ -102,34 +107,47 @@ const startInterval = (index) => {
         }, 1000);
     }
     else {
-        if (bg_timer > 0) {
+        console.log("timer: ", bg_timer, "index: ", bg_index);
+        console.log("last_visited: ", last_visited, "current_index: ", current_index);
+        if (bg_timer > 0 && (last_visited - current_index === 1)) {
+            console.log(bg_index , current_index);
+            quizQuestions[bg_index].consumed = bg_timer;
             bg_interval = setInterval(() => {
-                if (bg_timer === 0) {
+                console.log("ahmad");
+                if (bg_timer <= 0) {
                     clearInterval(bg_interval);
-                    clearInterval(quizQuestions[index + 1].timer);
-                    bg_timer = null;
-                    quizQuestions[index + 1].timer = null
+                    clearInterval(quizQuestions[bg_index]?.timer);
+                    if (quizQuestions[bg_index]) quizQuestions[bg_index].timer = null
+                    selected[bg_index] = "opt5";
+                    if (quizQuestions[bg_index]) quizQuestions[bg_index].consumed = 0;
                     bg_interval = null;
-                    selected[index + 1] = "opt5";
-                    quizQuestions[index + 1].consumed = 0;
+                    bg_index = null;
+                    bg_timer = null;
                     if (current_index === 3) return results();
-                    current_index++;
                 }
-                else bg_timer--;
+                else {
+                    console.log("bg reduce: ", bg_timer);
+                    bg_timer--;
+                }
             }, 1000);
         }
         loadTime(quizQuestions[index].consumed);
     }
-    // }
 };
 
 const onNext = () => {
-    console.log("current: ", current_index);
     let next_btn = document.getElementById("next-button");
     if (next_btn.disabled) return;
     if (current_index === 3) return results();
+    if (!all_times.includes(current_index) && quizQuestions[current_index].consumed > 0) {
+        quizQuestions[current_index].consumed++;
+        all_times.push(current_index);
+    }
+
     current_index++;
+    last_visited = current_index;
     next_btn.disabled = true;
+
     let options = document.querySelectorAll('input[name=opt]');
     if (selected[current_index] || quizQuestions[current_index].consumed === 0) {
         if (selected[current_index] === "opt5" && quizQuestions[current_index].consumed === 0)
@@ -146,17 +164,20 @@ const onNext = () => {
             opt.checked = false;
         });
     }
+
     bootstrapApp(current_index);
 };
 const onPrevious = () => {
     let next_btn = document.getElementById("next-button");
     if (current_index === 0) return;
-
-    if(quizQuestions[current_index].consumed !== 0 && selected[current_index]) {
+    if (quizQuestions[current_index].consumed !== 0 && !selected[current_index]) {
+        bg_index = current_index;
         bg_timer = quizQuestions[current_index].consumed;
     }
+
     clearInterval(quizQuestions[current_index].timer);
     quizQuestions[current_index].timer = null;
+
     current_index--;
     bootstrapApp(current_index);
 
